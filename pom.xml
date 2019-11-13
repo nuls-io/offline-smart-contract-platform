@@ -6,7 +6,7 @@
 
     <groupId>io.nuls.v2</groupId>
     <artifactId>off-smartcontract-api</artifactId>
-    <version>0.16</version>
+    <version>0.17</version>
     <name>off-smartcontract-api</name>
 
     <parent>
@@ -95,11 +95,6 @@
             <version>5.17.2</version>
         </dependency>
 
-        <dependency>
-            <groupId>io.nuls.v2</groupId>
-            <artifactId>sdk4j-jdk8</artifactId>
-            <version>1.0.5.RELEASE</version>
-        </dependency>
     </dependencies>
 
     <build>
