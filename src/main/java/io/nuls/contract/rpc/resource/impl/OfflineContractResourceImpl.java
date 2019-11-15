@@ -680,8 +680,9 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
         }catch(NulsRuntimeException e){
             throw e;
         }catch (Throwable e) {
-            Log.error(e.getMessage());
-            throw new NulsRuntimeException(e);
+            NulsRuntimeException nulsRuntimeException = new NulsRuntimeException(e);
+            Log.error(nulsRuntimeException.format());
+            throw nulsRuntimeException;
         }
     }
 

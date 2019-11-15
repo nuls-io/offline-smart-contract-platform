@@ -135,6 +135,11 @@ public class NulsRuntimeException extends RuntimeException {
      */
     public NulsRuntimeException(Throwable cause) {
         super(cause);
+        if(cause instanceof NulsException) {
+            NulsException nulsException = (NulsException) cause;
+            this.code = nulsException.getCode();
+            this.message = nulsException.getMessage();
+        }
     }
 
     /**

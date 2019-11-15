@@ -2,6 +2,7 @@ package io.nuls.contract.service.impl;
 
 import io.nuls.contract.model.RpcErrorCode;
 import io.nuls.contract.model.vo.TransactionInfo;
+import io.nuls.contract.rpc.exception.NulsJsonRpcClientException;
 import io.nuls.contract.service.TransactionService;
 import io.nuls.core.exception.NulsException;
 import io.nuls.core.exception.NulsRuntimeException;
@@ -21,6 +22,9 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             result = httpClient.getRpcHttpClient().invoke("broadcastTx",new Object[]{chainId,txHex}, Map.class);
         } catch (Throwable e) {
+            if(e instanceof NulsJsonRpcClientException) {
+                throw new NulsException(((NulsJsonRpcClientException) e).getCode(), e.getMessage());
+            }
             throw new NulsException(RpcErrorCode.NULS_SERVICE_ERROR,e.getMessage());
         }
         boolean  successStr=(boolean) result.get("value");

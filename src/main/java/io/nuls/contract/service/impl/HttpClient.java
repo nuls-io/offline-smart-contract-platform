@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 import io.nuls.contract.autoconfig.ApiModuleInfoConfig;
+import io.nuls.contract.rpc.exception.DefineExceptionResolver;
+import io.nuls.contract.rpc.exception.NulsJsonRpcClientException;
 import io.nuls.contract.utils.StringUtils;
 import io.nuls.core.log.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ public class HttpClient {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             rpcHttpClient=new JsonRpcHttpClient(objectMapper,new URL(accessPath),new HashMap());
+            rpcHttpClient.setExceptionResolver(DefineExceptionResolver.INSTANCE);
         }catch (Exception e){
             Log.error(e);
         }
@@ -42,6 +45,7 @@ public class HttpClient {
                 ObjectMapper objectMapper = new ObjectMapper();
                 objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 rpcHttpClient=new JsonRpcHttpClient(objectMapper,new URL(nowUrl),new HashMap());
+                rpcHttpClient.setExceptionResolver(DefineExceptionResolver.INSTANCE);
                 infoConfig.setCreateNewClient(false);
             }
         }catch (Exception e){

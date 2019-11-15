@@ -23,36 +23,37 @@
  */
 package io.nuls.contract.rpc.exception;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.googlecode.jsonrpc4j.ErrorData;
 import com.googlecode.jsonrpc4j.ErrorResolver;
 import io.nuls.contract.model.RpcErrorCode;
-import io.nuls.core.exception.NulsRuntimeException;
-import io.nuls.core.model.StringUtils;
-
-import java.lang.reflect.Method;
-import java.util.List;
-
-import static com.googlecode.jsonrpc4j.ErrorResolver.JsonError.ERROR_NOT_HANDLED;
 
 /**
  * @author: PierreLuo
- * @date: 2019-07-09
+ * @date: 2019-11-15
  */
-public enum DefineErrorResolver implements ErrorResolver {
-    INSTANCE;
+public class NulsJsonError extends ErrorResolver.JsonError {
 
+    private String code;
     /**
-     * {@inheritDoc}
+     * Creates the error.
+     *
+     * @param code    the code
+     * @param message the message
+     * @param data    the data
      */
-    @Override
-    public JsonError resolveError(Throwable throwable, Method method, List<JsonNode> arguments) {
-        if(throwable.getClass().equals(NulsRuntimeException.class)){
-            NulsRuntimeException exception=(NulsRuntimeException)throwable;
-            String code = exception.getCode();
-            return new NulsJsonError(code, throwable.getMessage(), null);
-        }else{
-            return new JsonError(ERROR_NOT_HANDLED.code, throwable.getMessage(), null);
-        }
+    public NulsJsonError(int code, String message, Object data) {
+        super(code, message, data);
+    }
+
+    public NulsJsonError(String code, String message, Object data) {
+        super(Integer.parseInt(RpcErrorCode.NULS_SERVICE_ERROR.getCode()), message, data);
+        this.code = code;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 }
