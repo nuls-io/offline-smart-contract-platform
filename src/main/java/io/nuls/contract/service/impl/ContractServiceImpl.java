@@ -7,6 +7,7 @@ import io.nuls.contract.model.ContractMethodArg;
 import io.nuls.contract.model.ContractResultInfo;
 import io.nuls.contract.model.RpcErrorCode;
 import io.nuls.contract.model.deserialization.ContractResultDataDto;
+import io.nuls.contract.rpc.exception.NulsJsonRpcClientException;
 import io.nuls.contract.service.ContractService;
 import io.nuls.core.exception.NulsException;
 import io.nuls.core.exception.NulsRuntimeException;
@@ -231,7 +232,12 @@ public class ContractServiceImpl implements ContractService {
 
     private String parseErrorMsg(Throwable e) {
         String msg = e.getMessage();
-        if(e instanceof JsonRpcClientException) {
+        if(e instanceof NulsJsonRpcClientException) {
+            JsonNode data = ((NulsJsonRpcClientException) e).getData();
+            if(data != null) {
+                msg = data.asText();
+            }
+        } else if(e instanceof JsonRpcClientException) {
             JsonNode data = ((JsonRpcClientException) e).getData();
             if(data != null) {
                 msg = data.asText();
