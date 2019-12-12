@@ -1,5 +1,6 @@
 package io.nuls.contract.rpc.resource.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.googlecode.jsonrpc4j.JsonRpcParam;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
@@ -46,6 +47,8 @@ import io.nuls.core.log.Log;
 import io.nuls.core.model.FormatValidUtils;
 import io.nuls.core.parse.JSONUtils;
 import io.nuls.core.rockdb.util.DBUtils;
+import javafx.beans.binding.ObjectExpression;
+import jdk.nashorn.internal.parser.JSONParser;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -376,7 +379,9 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
     public Map validateContractCreate(int chainId, String sender, long gasLimit, long price, String contractCode, Object[] args) {
         boolean isSuccess=true;
         try{
-            isSuccess=contractService.validateContractCreate(chainId,sender,gasLimit,price,contractCode,args);
+            String[] constructorArgsTypes=contractService.getContractConstructorArgsTypes(chainId,contractCode);
+            Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,constructorArgsTypes);
+            isSuccess=contractService.validateContractCreate(chainId,sender,gasLimit,price,contractCode,newArgs);
         }catch (NulsException e) {
             Log.error(e.format());
             throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());
@@ -457,6 +462,8 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             if (argTypes==null){
                 throw new NulsRuntimeException(RpcErrorCode.GET_CONSTRUSTOR_PARAMETER);
             }
+            args=ContractUtil.convertArgsToObjectArray(args,argTypes);
+
             isSuccess=contractService.validateContractCreate(chainId,sender,gasLimit,price,contractCode,args);
         }catch (NulsException e) {
             Log.error(e.format());
@@ -571,7 +578,9 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
     @Override
     public Map imputedContractCreateGas(int chainId, String sender, String contractCode, Object[] args) {
         try {
-            int gamLimit=contractService.imputedContractCreateGas(chainId,sender,contractCode,args);
+            String[] constructorArgsTypes=contractService.getContractConstructorArgsTypes(chainId,contractCode);
+            Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,constructorArgsTypes);
+            int gamLimit=contractService.imputedContractCreateGas(chainId,sender,contractCode,newArgs);
             Map<String,Integer> map = new HashMap<String,Integer>();
             map.put("gasLimit",gamLimit);
             return map;
@@ -579,6 +588,21 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             Log.error(e.format());
             throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());
         }
+    }
+
+    @Override
+    public Map imputedContractCallGas(int chainId, String sender, BigInteger value, String contractAddress, String methodName, String methodDesc, Object[] args) {
+        Map map = new HashMap();
+        try {
+            String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName);
+            Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,types);
+            int gasLimit=contractService.imputedContractCallGas(chainId,sender,value,contractAddress,methodName,methodDesc,newArgs);
+            map.put("gasLimit",gasLimit);
+        } catch (NulsException e) {
+            Log.error(e.format());
+            throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());
+        }
+        return map;
     }
 
     @Override
@@ -612,6 +636,22 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             Log.error(e.format());
             throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());
         }
+    }
+
+    @Override
+    public Map validateContractCall(int chainId, String sender, BigInteger value, long gasLimit, long price, String contractAddress, String methodName, String methodDesc, Object[] args) {
+        Map map = new HashMap();
+        boolean result=false;
+        try{
+            String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName);
+            Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,types);
+            result=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,newArgs);
+        }catch (NulsException e) {
+            Log.error(e.format());
+            throw new NulsRuntimeException(RpcErrorCode.VALIADE_CONTRACT_CALL_ERROR,e.getMessage());
+        }
+        map.put("success", result);
+        return map;
     }
 
     @Override
@@ -650,9 +690,11 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             Log.error(e.format());
             throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());
         }
-        String[][] convertArgs = ContractUtil.twoDimensionalArray(args, argsTypes);
+        Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,argsTypes);
+        String[][] convertArgs = ContractUtil.twoDimensionalArray(newArgs, argsTypes);
+        //String[][] convertArgs = ContractUtil.twoDimensionalArray(args, argsTypes);
         try{
-            validate=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,args);
+            validate=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,newArgs);
         }catch (NulsException e) {
             Log.error(e.format());
             throw new NulsRuntimeException(RpcErrorCode.VALIADE_CONTRACT_CALL_ERROR,e.getMessage());
@@ -787,7 +829,9 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             throw new NulsRuntimeException(RpcErrorCode.NULL_PARAMETER,"methodName");
         }
         try {
-            String invokeResult= contractService.invokeView(chainId,contractAddress,methodName,methodDesc,args);
+            String[] argsTypes= contractService.getContractMethodArgsTypes(chainId, contractAddress, methodName);
+            Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,argsTypes);
+            String invokeResult= contractService.invokeView(chainId,contractAddress,methodName,methodDesc,newArgs);
             Map<String,String> map = new HashMap<String,String>();
             map.put("methodReturn",invokeResult);
             return map;
