@@ -17,7 +17,17 @@ public class AccountInfoVo implements Serializable {
 
     private Long createTime;
 
+    private Boolean encrypted;
+
     public AccountInfoVo() {
+    }
+
+    public Boolean getEncrypted() {
+        return encrypted;
+    }
+
+    public void setEncrypted(Boolean encrypted) {
+        this.encrypted = encrypted;
     }
 
     public int getChainId() {

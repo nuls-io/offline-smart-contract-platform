@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.googlecode.jsonrpc4j.JsonRpcClientException;
 import io.nuls.contract.account.model.bo.ContractInfo;
 import io.nuls.contract.model.ContractMethodArg;
-import io.nuls.contract.model.ContractResultInfo;
 import io.nuls.contract.model.RpcErrorCode;
 import io.nuls.contract.model.deserialization.ContractResultDataDto;
 import io.nuls.contract.rpc.exception.NulsJsonRpcClientException;
@@ -115,11 +114,11 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public String[] getContractMethodArgsTypes(int chainId, String contractAddress, String methodname) throws NulsException {
+    public String[] getContractMethodArgsTypes(int chainId, String contractAddress, String methodName, String methodDesc) throws NulsException {
         String[] argsTypes=null;
         List result= null;
         try {
-            result = httpClient.getRpcHttpClient().invoke("getContractMethodArgsTypes",new Object[]{chainId,contractAddress,methodname}, List.class);
+            result = httpClient.getRpcHttpClient().invoke("getContractMethodArgsTypes",new Object[]{chainId,contractAddress, methodName, methodDesc}, List.class);
         }  catch (Throwable e) {
             throw new NulsException(RpcErrorCode.NULS_SERVICE_ERROR, parseErrorMsg(e));
         }

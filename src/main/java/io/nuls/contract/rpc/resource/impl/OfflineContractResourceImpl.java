@@ -1,7 +1,5 @@
 package io.nuls.contract.rpc.resource.impl;
 
-import com.alibaba.fastjson.JSON;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.googlecode.jsonrpc4j.JsonRpcParam;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import io.nuls.base.RPCUtil;
@@ -17,13 +15,11 @@ import io.nuls.contract.account.model.po.AccountKeyStoreDto;
 import io.nuls.contract.autoconfig.ApiModuleInfoConfig;
 import io.nuls.contract.constant.ContractConstant;
 import io.nuls.contract.constant.TxType;
-import io.nuls.contract.model.ContractResultInfo;
 import io.nuls.contract.model.deserialization.CallContractDataDto;
 import io.nuls.contract.model.deserialization.ContractResultDataDto;
 import io.nuls.contract.model.deserialization.CreateContractDataDto;
 import io.nuls.contract.model.deserialization.DeleteContractDataDto;
 import io.nuls.contract.model.vo.AccountInfoVo;
-import io.nuls.contract.model.vo.ChainInfo;
 import io.nuls.contract.model.vo.ContractInfoVo;
 import io.nuls.contract.account.utils.AccountTool;
 import io.nuls.contract.helper.ContractTxHelper;
@@ -47,9 +43,6 @@ import io.nuls.core.log.Log;
 import io.nuls.core.model.FormatValidUtils;
 import io.nuls.core.parse.JSONUtils;
 import io.nuls.core.rockdb.util.DBUtils;
-import javafx.beans.binding.ObjectExpression;
-import jdk.nashorn.internal.parser.JSONParser;
-import org.apache.commons.io.IOUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -57,7 +50,6 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -168,6 +160,7 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             }
             map.put("address",account.getAddress().toString());
             map.put("prikey",priKey);
+            map.put("encrypted", Boolean.valueOf(account.isEncrypted()).toString());
         }catch (NulsException e){
             Log.error(e.getMessage());
             throw new NulsRuntimeException(e.getErrorCode());
@@ -329,6 +322,7 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             Account account= accountService.importAccountByPrikey(chainId, priKey, password, overwrite);
             Map<String,String> map = new HashMap<String,String>();
             map.put("address",account.getAddress().toString());
+            map.put("encrypted",Boolean.valueOf(account.isEncrypted()).toString());
             return map;
         } catch (NulsException e) {
             Log.error(e.format());
@@ -594,7 +588,7 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
     public Map imputedContractCallGas(int chainId, String sender, BigInteger value, String contractAddress, String methodName, String methodDesc, Object[] args) {
         Map map = new HashMap();
         try {
-            String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName);
+            String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName, methodDesc);
             Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,types);
             int gasLimit=contractService.imputedContractCallGas(chainId,sender,value,contractAddress,methodName,methodDesc,newArgs);
             map.put("gasLimit",gasLimit);
@@ -643,7 +637,7 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
         Map map = new HashMap();
         boolean result=false;
         try{
-            String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName);
+            String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName, methodDesc);
             Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,types);
             result=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,newArgs);
         }catch (NulsException e) {
@@ -685,7 +679,7 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
         byte[] contractAddressBytes = AddressTool.getAddress(contractAddress);
         String[] argsTypes=null;
         try{
-            argsTypes= contractService.getContractMethodArgsTypes(chainId, contractAddress, methodName);
+            argsTypes= contractService.getContractMethodArgsTypes(chainId, contractAddress, methodName, methodDesc);
         }catch (NulsException e) {
             Log.error(e.format());
             throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());
@@ -829,7 +823,7 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             throw new NulsRuntimeException(RpcErrorCode.NULL_PARAMETER,"methodName");
         }
         try {
-            String[] argsTypes= contractService.getContractMethodArgsTypes(chainId, contractAddress, methodName);
+            String[] argsTypes= contractService.getContractMethodArgsTypes(chainId, contractAddress, methodName, methodDesc);
             Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,argsTypes);
             String invokeResult= contractService.invokeView(chainId,contractAddress,methodName,methodDesc,newArgs);
             Map<String,String> map = new HashMap<String,String>();
@@ -842,13 +836,13 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
     }
 
     @Override
-    public Map getContractMethodArgsTypes(int chainId, String contractAddress, String methodName) {
+    public Map getContractMethodArgsTypes(int chainId, String contractAddress, String methodName, String methodDesc) {
         if (!AddressTool.validAddress(chainId, contractAddress)) {
             throw new NulsRuntimeException(RpcErrorCode.PARAMETER_ERROR,"contractAddress");
         }
         String[] argsTypes=null;
         try{
-            argsTypes= contractService.getContractMethodArgsTypes(chainId, contractAddress, methodName);
+            argsTypes= contractService.getContractMethodArgsTypes(chainId, contractAddress, methodName, methodDesc);
         }catch (NulsException e) {
             Log.error(e.format());
             throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());

@@ -89,6 +89,7 @@ public class AccountPo extends BaseNulsData {
         accountInfoVo.setChainId(this.getChainId());
         accountInfoVo.setAddress(this.getAddress());
         accountInfoVo.setCreateTime(this.getCreateTime());
+        accountInfoVo.setEncrypted(this.isEncrypted());
         return accountInfoVo;
     }
 

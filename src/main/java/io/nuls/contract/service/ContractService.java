@@ -18,7 +18,7 @@ public interface ContractService {
 
     public int imputedContractCreateGas(int chainId,String sender,String contractCode,Object[] args) throws NulsException;
 
-    public String[] getContractMethodArgsTypes(int chainId,String contractAddress,String methodname) throws NulsException;
+    public String[] getContractMethodArgsTypes(int chainId, String contractAddress, String methodName, String methodDesc) throws NulsException;
 
     public boolean validateContractCall(int chainId, String sender, BigInteger value,long gasLimit,long price,String contractAddress,String methodName,String methodDesc,Object[] args) throws NulsException;
 

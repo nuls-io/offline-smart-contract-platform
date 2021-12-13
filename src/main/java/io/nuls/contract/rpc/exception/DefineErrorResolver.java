@@ -50,7 +50,7 @@ public enum DefineErrorResolver implements ErrorResolver {
         if(throwable.getClass().equals(NulsRuntimeException.class)){
             NulsRuntimeException exception=(NulsRuntimeException)throwable;
             String code = exception.getCode();
-            return new NulsJsonError(code, throwable.getMessage(), null);
+            return new NulsJsonError(code, throwable.getMessage(), code);
         }else{
             return new JsonError(ERROR_NOT_HANDLED.code, throwable.getMessage(), null);
         }
