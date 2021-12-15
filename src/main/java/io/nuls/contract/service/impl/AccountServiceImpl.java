@@ -139,45 +139,43 @@ public class AccountServiceImpl implements AccountService {
                 accountList.add(accountInfoVo);
             }
         }
-        List<AccountInfo> accountInfos = this.requestAccountList(chainId, addressList);
-        for (int i = 0, length = accountList.size(); i < length; i++) {
-            AccountInfoVo accountInfoVo = accountList.get(i);
-            AccountInfo accountInfo = accountInfos.get(i);
-            accountInfoVo.setAlias(accountInfo.getAlias());
-            accountInfoVo.setBalance(accountInfo.getBalance());
-            accountInfoVo.setTotalBalance(accountInfo.getTotalBalance());
+        try {
+            List<AccountInfo> accountInfos = this.requestAccountList(chainId, addressList);
+            for (int i = 0, length = accountList.size(); i < length; i++) {
+                AccountInfoVo accountInfoVo = accountList.get(i);
+                AccountInfo accountInfo = accountInfos.get(i);
+                accountInfoVo.setAlias(accountInfo.getAlias());
+                accountInfoVo.setBalance(accountInfo.getBalance());
+                accountInfoVo.setTotalBalance(accountInfo.getTotalBalance());
+            }
+        } catch (Throwable e) {
+            Log.error(e.getMessage());
         }
         Collections.sort(accountList, (AccountInfoVo o1, AccountInfoVo o2) -> (o2.getCreateTime().compareTo(o1.getCreateTime())));
         return accountList;
     }
 
-    private List<AccountInfo> requestAccountList(int chainId, List<String> addressList) throws NulsException {
-        try {
-            List<Map> args = new ArrayList<>();
-            int i = 1;
-            for (String address : addressList) {
-                Map<String, Object> map = new HashMap<>(8);
-                map.put(ID, i++);
-                map.put(JSONRPC, JSONRPC_VERSION);
-                map.put(METHOD, "getAccount");
-                map.put(PARAMS, ListUtil.of(chainId, address));
-                args.add(map);
-            }
-
-            String resultStr = HttpClientUtil.post(httpClient.getRpcHttpClient().getServiceUrl().toString(), args);
-            List<RpcResult> resultList = JSONUtils.json2list(resultStr, RpcResult.class);
-
-            List<AccountInfo> infos = new ArrayList<>();
-            for (RpcResult result : resultList) {
-                Map map = (Map) result.getResult();
-                infos.add(JSONUtils.map2pojo(map, AccountInfo.class));
-            }
-            return infos;
-        } catch (Throwable e) {
-            Log.error(e.getMessage());
-            throw new NulsException(RpcErrorCode.NULS_SERVICE_ERROR, e.getMessage());
+    private List<AccountInfo> requestAccountList(int chainId, List<String> addressList) throws Exception {
+        List<Map> args = new ArrayList<>();
+        int i = 1;
+        for (String address : addressList) {
+            Map<String, Object> map = new HashMap<>(8);
+            map.put(ID, i++);
+            map.put(JSONRPC, JSONRPC_VERSION);
+            map.put(METHOD, "getAccount");
+            map.put(PARAMS, ListUtil.of(chainId, address));
+            args.add(map);
         }
 
+        String resultStr = HttpClientUtil.post(httpClient.getRpcHttpClient().getServiceUrl().toString(), args);
+        List<RpcResult> resultList = JSONUtils.json2list(resultStr, RpcResult.class);
+
+        List<AccountInfo> infos = new ArrayList<>();
+        for (RpcResult result : resultList) {
+            Map map = (Map) result.getResult();
+            infos.add(JSONUtils.map2pojo(map, AccountInfo.class));
+        }
+        return infos;
     }
 
 
