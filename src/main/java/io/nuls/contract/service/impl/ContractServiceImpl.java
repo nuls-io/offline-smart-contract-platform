@@ -130,10 +130,10 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public boolean validateContractCall(int chainId, String sender, BigInteger value, long gasLimit, long price, String contractAddress, String methodName, String methodDesc, Object[] args) throws NulsException {
+    public boolean validateContractCall(int chainId, String sender, BigInteger value, long gasLimit, long price, String contractAddress, String methodName, String methodDesc, Object[] args, Object multyAssetValues) throws NulsException {
         boolean isSuccess=false;
         try {
-            Map  result = httpClient.getRpcHttpClient().invoke("validateContractCall",new Object[]{chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,args}, Map.class);
+            Map  result = httpClient.getRpcHttpClient().invoke("validateContractCall",new Object[]{chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,args,multyAssetValues}, Map.class);
             if(result!=null){
                 boolean  successStr=(boolean) result.get("success");
                 if(successStr){
@@ -149,11 +149,11 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public int imputedContractCallGas(int chainId, String sender, BigInteger value, String contractAddress, String methodName, String methodDesc, Object[] args) throws NulsException {
+    public int imputedContractCallGas(int chainId, String sender, BigInteger value, String contractAddress, String methodName, String methodDesc, Object[] args, Object multyAssetValues) throws NulsException {
         int gasLimit=0;
         Map result=null;
         try{
-            result= httpClient.getRpcHttpClient().invoke("imputedContractCallGas",new Object[]{chainId,sender,value,contractAddress,methodName,methodDesc,args}, Map.class);
+            result= httpClient.getRpcHttpClient().invoke("imputedContractCallGas",new Object[]{chainId,sender,value,contractAddress,methodName,methodDesc,args,multyAssetValues}, Map.class);
             if(result!=null){
                 if(result.containsKey("gasLimit")){
                     gasLimit=(int) result.get("gasLimit");

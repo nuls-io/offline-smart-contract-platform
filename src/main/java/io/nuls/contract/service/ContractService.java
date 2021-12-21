@@ -20,9 +20,9 @@ public interface ContractService {
 
     public String[] getContractMethodArgsTypes(int chainId, String contractAddress, String methodName, String methodDesc) throws NulsException;
 
-    public boolean validateContractCall(int chainId, String sender, BigInteger value,long gasLimit,long price,String contractAddress,String methodName,String methodDesc,Object[] args) throws NulsException;
+    public boolean validateContractCall(int chainId, String sender, BigInteger value, long gasLimit, long price, String contractAddress, String methodName, String methodDesc, Object[] args, Object multyAssetValues) throws NulsException;
 
-    public int imputedContractCallGas(int chainId ,String sender,BigInteger  value,String contractAddress,String methodName,String methodDesc,Object[] args) throws NulsException;
+    public int imputedContractCallGas(int chainId, String sender, BigInteger value, String contractAddress, String methodName, String methodDesc, Object[] args, Object multyAssetValues) throws NulsException;
 
     public boolean validateContractDelete(int chainId ,String sender,String contractAddress) throws NulsException;
 

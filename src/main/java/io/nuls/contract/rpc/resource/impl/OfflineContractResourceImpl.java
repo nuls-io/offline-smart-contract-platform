@@ -12,30 +12,31 @@ import io.nuls.base.signture.P2PHKSignature;
 import io.nuls.base.signture.TransactionSignature;
 import io.nuls.contract.account.model.bo.*;
 import io.nuls.contract.account.model.po.AccountKeyStoreDto;
+import io.nuls.contract.account.utils.AccountTool;
 import io.nuls.contract.autoconfig.ApiModuleInfoConfig;
 import io.nuls.contract.constant.ContractConstant;
 import io.nuls.contract.constant.TxType;
+import io.nuls.contract.helper.ContractTxHelper;
+import io.nuls.contract.model.RpcErrorCode;
 import io.nuls.contract.model.deserialization.CallContractDataDto;
 import io.nuls.contract.model.deserialization.ContractResultDataDto;
 import io.nuls.contract.model.deserialization.CreateContractDataDto;
 import io.nuls.contract.model.deserialization.DeleteContractDataDto;
-import io.nuls.contract.model.vo.AccountInfoVo;
-import io.nuls.contract.model.vo.ContractInfoVo;
-import io.nuls.contract.account.utils.AccountTool;
-import io.nuls.contract.helper.ContractTxHelper;
-import io.nuls.contract.model.RpcErrorCode;
 import io.nuls.contract.model.tx.CallContractTransaction;
 import io.nuls.contract.model.tx.CreateContractTransaction;
 import io.nuls.contract.model.tx.DeleteContractTransaction;
 import io.nuls.contract.model.txdata.CallContractData;
 import io.nuls.contract.model.txdata.CreateContractData;
 import io.nuls.contract.model.txdata.DeleteContractData;
+import io.nuls.contract.model.vo.AccountInfoVo;
+import io.nuls.contract.model.vo.ContractInfoVo;
 import io.nuls.contract.model.vo.TransactionInfo;
 import io.nuls.contract.rpc.resource.OfflineContractResource;
 import io.nuls.contract.service.*;
 import io.nuls.contract.utils.ContractUtil;
 import io.nuls.contract.utils.StringUtils;
 import io.nuls.core.basic.Page;
+import io.nuls.core.basic.Result;
 import io.nuls.core.crypto.HexUtil;
 import io.nuls.core.exception.NulsException;
 import io.nuls.core.exception.NulsRuntimeException;
@@ -43,11 +44,16 @@ import io.nuls.core.log.Log;
 import io.nuls.core.model.FormatValidUtils;
 import io.nuls.core.parse.JSONUtils;
 import io.nuls.core.rockdb.util.DBUtils;
+import io.nuls.v2.model.dto.ProgramMultyAssetValue;
+import io.nuls.v2.util.NulsSDKTool;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.URL;
@@ -586,11 +592,16 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
 
     @Override
     public Map imputedContractCallGas(int chainId, String sender, BigInteger value, String contractAddress, String methodName, String methodDesc, Object[] args) {
+        return this.imputedContractCallGas(chainId, sender, value, contractAddress, methodName, methodDesc, args, null);
+    }
+
+    @Override
+    public Map imputedContractCallGas(int chainId, String sender, BigInteger value, String contractAddress, String methodName, String methodDesc, Object[] args, Object multyAssetValues) {
         Map map = new HashMap();
         try {
             String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName, methodDesc);
             Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,types);
-            int gasLimit=contractService.imputedContractCallGas(chainId,sender,value,contractAddress,methodName,methodDesc,newArgs);
+            int gasLimit=contractService.imputedContractCallGas(chainId,sender,value,contractAddress,methodName,methodDesc,newArgs, multyAssetValues);
             map.put("gasLimit",gasLimit);
         } catch (NulsException e) {
             Log.error(e.format());
@@ -634,12 +645,17 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
 
     @Override
     public Map validateContractCall(int chainId, String sender, BigInteger value, long gasLimit, long price, String contractAddress, String methodName, String methodDesc, Object[] args) {
+        return this.validateContractCall(chainId, sender, value, gasLimit, price, contractAddress, methodName, methodDesc, args, null);
+    }
+
+    @Override
+    public Map validateContractCall(int chainId, String sender, BigInteger value, long gasLimit, long price, String contractAddress, String methodName, String methodDesc, Object[] args, Object multyAssetValues) {
         Map map = new HashMap();
         boolean result=false;
         try{
             String[] types=contractService.getContractMethodArgsTypes(chainId,contractAddress,methodName, methodDesc);
             Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,types);
-            result=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,newArgs);
+            result=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,newArgs, multyAssetValues);
         }catch (NulsException e) {
             Log.error(e.format());
             throw new NulsRuntimeException(RpcErrorCode.VALIADE_CONTRACT_CALL_ERROR,e.getMessage());
@@ -650,6 +666,13 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
 
     @Override
     public Map callContract(int chainId, int assetChainId,int assetId, String sender,String password, String contractAddress, BigInteger value, String methodName, String methodDesc, Object[] args, long gasLimit, long price,String remark) {
+        return this.callContract(chainId, assetChainId, assetId, sender, password, contractAddress, value, methodName, methodDesc, args, gasLimit, price, remark, null);
+    }
+
+    @Override
+    public Map callContract(int chainId, int assetChainId, int assetId, String sender, String password, String contractAddress, BigInteger value, String methodName, String methodDesc, Object[] args, long gasLimit, long price, String remark, Object multyAssetValues) {
+
+        // 组装跨链资产转入合约地址的情况
         if (value.compareTo(BigInteger.ZERO) < 0) {
             throw new NulsRuntimeException(RpcErrorCode.PARAMETER_ERROR,"value");
         }
@@ -685,10 +708,8 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             throw new NulsRuntimeException(e.getErrorCode(),e.getMessage());
         }
         Object[] newArgs=ContractUtil.convertArgsToObjectArray(args,argsTypes);
-        String[][] convertArgs = ContractUtil.twoDimensionalArray(newArgs, argsTypes);
-        //String[][] convertArgs = ContractUtil.twoDimensionalArray(args, argsTypes);
         try{
-            validate=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,newArgs);
+            validate=contractService.validateContractCall(chainId,sender,value,gasLimit,price,contractAddress,methodName,methodDesc,newArgs, multyAssetValues);
         }catch (NulsException e) {
             Log.error(e.format());
             throw new NulsRuntimeException(RpcErrorCode.VALIADE_CONTRACT_CALL_ERROR,e.getMessage());
@@ -697,18 +718,71 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             throw new NulsRuntimeException(RpcErrorCode.VALIADE_CONTRACT_CALL_ERROR);
         }
 
-        CallContractTransaction tx = new CallContractTransaction();
-        if (StringUtils.isNotBlank(remark)) {
-            tx.setRemark(remark.getBytes(StandardCharsets.UTF_8));
-        }
-        tx.setTime(System.currentTimeMillis()/ 1000);
-        byte[] senderBytes = AddressTool.getAddress(sender);
-
         try{
+            List<ProgramMultyAssetValue> _multyAssetValues = null;
+            if (multyAssetValues != null) {
+                _multyAssetValues = new ArrayList<>();
+                List list = (List) multyAssetValues;
+                for (int i = 0, size = list.size(); i < size; i++) {
+                    List multyAssetValue = (List) list.get(i);
+                    BigInteger _value = new BigInteger(list.get(0).toString());
+                    int _assetChainId = Integer.parseInt(list.get(1).toString().trim());
+                    int _assetId = Integer.parseInt(list.get(2).toString().trim());
+                    BalanceInfo _balanceInfo = accountService.getAccountBalance(chainId, _assetChainId, _assetId, sender);
+                    ProgramMultyAssetValue programMultyAssetValue = new ProgramMultyAssetValue(value, _balanceInfo.getNonce(), _assetChainId, _assetId);
+                    _multyAssetValues.add(programMultyAssetValue);
+                }
+            }
+            BalanceInfo balanceInfo = accountService.getAccountBalance(chainId, assetChainId, assetId, sender);
+
+            Result<Map> mapResult = NulsSDKTool.callContractTxOffline(
+                    sender,
+                    balanceInfo.getBalance(),
+                    balanceInfo.getNonce(),
+                    value,
+                    contractAddress,
+                    gasLimit,
+                    methodName,
+                    methodDesc,
+                    newArgs,
+                    argsTypes,
+                    remark,
+                    _multyAssetValues);
+            if (mapResult.isFailed()) {
+                throw new NulsRuntimeException(mapResult.getErrorCode());
+            }
+            Map data = mapResult.getData();
+            String hash = (String) data.get("hash");
+            String txHex = (String) data.get("txHex");
+
+            // 签名交易
+            String priKey = accountService.getPrivateKey(chainId, sender, password);
+            Result<Map> signTxR = NulsSDKTool.sign(txHex, sender, priKey);
+            if (signTxR.isFailed()) {
+                throw new NulsRuntimeException(RpcErrorCode.SIGNATURE_ERROR);
+            }
+            Map resultData = signTxR.getData();
+            String signedTxHex = (String) resultData.get("txHex");
+            // 广播交易
+            boolean result= transactionService.broadcastTx(chainId,signedTxHex);
+            if(result){
+                Map<String,String> map = new HashMap<String,String>();
+                map.put("txHash",hash);
+                return map;
+            }else {
+                throw new NulsRuntimeException(RpcErrorCode.BROADCAST_TX_ERROR);
+            }
+
+            /*
+            CallContractTransaction tx = new CallContractTransaction();
+            if (StringUtils.isNotBlank(remark)) {
+                tx.setRemark(remark.getBytes(StandardCharsets.UTF_8));
+            }
+            tx.setTime(System.currentTimeMillis()/ 1000);
+            byte[] senderBytes = AddressTool.getAddress(sender);
             //组装txData
             CallContractData createContractData= contractTxHelper.getCallContractData(senderBytes, contractAddressBytes,value,gasLimit,price,methodName,methodDesc, convertArgs);
 
-            BalanceInfo balanceInfo=accountService.getAccountBalance(chainId,assetChainId,assetId,sender);
             CoinData coinData = contractTxHelper.makeCoinData(chainId,assetId,senderBytes, contractAddressBytes,gasLimit,price,value,tx.size(),createContractData,balanceInfo.getNonce(),balanceInfo.getBalance());
             if(coinData==null){
                 throw new NulsRuntimeException(RpcErrorCode.INSUFFICIENT_BALANCE);
@@ -737,7 +811,7 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
                 return map;
             }else {
                 throw new NulsRuntimeException(RpcErrorCode.BROADCAST_TX_ERROR);
-            }
+            }*/
         }catch(NulsRuntimeException e){
             throw e;
         }catch (Throwable e) {
