@@ -6,7 +6,7 @@
 
     <groupId>io.nuls.v2</groupId>
     <artifactId>off-smartcontract-api</artifactId>
-    <version>0.22</version>
+    <version>0.23</version>
     <name>off-smartcontract-api</name>
 
     <parent>
