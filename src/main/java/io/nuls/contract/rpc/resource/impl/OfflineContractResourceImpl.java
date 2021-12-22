@@ -44,6 +44,7 @@ import io.nuls.core.log.Log;
 import io.nuls.core.model.FormatValidUtils;
 import io.nuls.core.parse.JSONUtils;
 import io.nuls.core.rockdb.util.DBUtils;
+import io.nuls.v2.NulsSDKBootStrap;
 import io.nuls.v2.model.dto.ProgramMultyAssetValue;
 import io.nuls.v2.util.NulsSDKTool;
 import org.bouncycastle.util.encoders.Hex;
@@ -724,17 +725,17 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
                 _multyAssetValues = new ArrayList<>();
                 List list = (List) multyAssetValues;
                 for (int i = 0, size = list.size(); i < size; i++) {
-                    List multyAssetValue = (List) list.get(i);
-                    BigInteger _value = new BigInteger(list.get(0).toString());
-                    int _assetChainId = Integer.parseInt(list.get(1).toString().trim());
-                    int _assetId = Integer.parseInt(list.get(2).toString().trim());
+                    List multyAssetValueList = (List) list.get(i);
+                    BigInteger _value = new BigInteger(multyAssetValueList.get(0).toString());
+                    int _assetChainId = Integer.parseInt(multyAssetValueList.get(1).toString().trim());
+                    int _assetId = Integer.parseInt(multyAssetValueList.get(2).toString().trim());
                     BalanceInfo _balanceInfo = accountService.getAccountBalance(chainId, _assetChainId, _assetId, sender);
-                    ProgramMultyAssetValue programMultyAssetValue = new ProgramMultyAssetValue(value, _balanceInfo.getNonce(), _assetChainId, _assetId);
+                    ProgramMultyAssetValue programMultyAssetValue = new ProgramMultyAssetValue(_value, _balanceInfo.getNonce(), _assetChainId, _assetId);
                     _multyAssetValues.add(programMultyAssetValue);
                 }
             }
             BalanceInfo balanceInfo = accountService.getAccountBalance(chainId, assetChainId, assetId, sender);
-
+            NulsSDKBootStrap.init(chainId, null);
             Result<Map> mapResult = NulsSDKTool.callContractTxOffline(
                     sender,
                     balanceInfo.getBalance(),
