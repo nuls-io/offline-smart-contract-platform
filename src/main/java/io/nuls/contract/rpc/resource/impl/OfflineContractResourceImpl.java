@@ -122,6 +122,8 @@ public class OfflineContractResourceImpl implements OfflineContractResource {
             desc="未获取到最新版本信息，本地版本为"+myVersion;
         }
         map.put("version",desc);
+        map.put("versionLocal",myVersion);
+        map.put("versionMaven",netVersion);
         map.put("isNew",isNew);
         return map;
     }

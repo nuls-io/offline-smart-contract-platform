@@ -156,6 +156,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private List<AccountInfo> requestAccountList(int chainId, List<String> addressList) throws Exception {
+        if (addressList.size() == 0) {
+            return Collections.EMPTY_LIST;
+        }
         List<Map> args = new ArrayList<>();
         int i = 1;
         for (String address : addressList) {
@@ -168,8 +171,14 @@ public class AccountServiceImpl implements AccountService {
         }
 
         String resultStr = HttpClientUtil.post(httpClient.getRpcHttpClient().getServiceUrl().toString(), args);
-        List<RpcResult> resultList = JSONUtils.json2list(resultStr, RpcResult.class);
-
+        List<RpcResult> resultList;
+        if (addressList.size() > 1) {
+            resultList = JSONUtils.json2list(resultStr, RpcResult.class);
+        } else {
+            resultList = new ArrayList<>();
+            RpcResult result = JSONUtils.json2pojo(resultStr, RpcResult.class);
+            resultList.add(result);
+        }
         List<AccountInfo> infos = new ArrayList<>();
         for (RpcResult result : resultList) {
             Map map = (Map) result.getResult();
