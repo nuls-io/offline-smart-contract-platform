@@ -6,7 +6,7 @@
 
     <groupId>io.nuls.v2</groupId>
     <artifactId>off-smartcontract-api</artifactId>
-    <version>0.29</version>
+    <version>0.30</version>
     <name>off-smartcontract-api</name>
 
     <parent>
@@ -29,7 +29,7 @@
         </license>
     </licenses>
     <scm>
-        <tag>0.29</tag>
+        <tag>0.30</tag>
         <url>https://github.com/nuls-io/offline-smart-contract-platform</url>
         <connection>https://github.com/nuls-io/offline-smart-contract-platform.git</connection>
         <developerConnection>https://nuls.io</developerConnection>
