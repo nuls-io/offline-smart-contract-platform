@@ -1,4 +1,4 @@
-# Off-SmartContract-API
+# Offine-SmartContract-API
 
 The purpose of offline smart contract platform is to lighten the burden of contract developers and improve development efficiency. It does not need to deploy NULS wallet locally, nor does it need to synchronize a large number of full data. Through integration with maven, the packaging and debugging of smart contracts will be highly integrated.
 
