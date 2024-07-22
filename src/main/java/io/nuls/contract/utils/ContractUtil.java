@@ -131,7 +131,7 @@ public class ContractUtil {
         try{
             for(int i=0;i<types.length;i++){
                 if(types[i].contains("[]") && args[i] instanceof String){
-                    newArgs.add(JSON.parseArray(String.valueOf(args[i]),Object.class));
+                    newArgs.add(JSON.parseArray(String.valueOf(args[i])).toArray());
                 }else{
                     newArgs.add(args[i]);
                 }

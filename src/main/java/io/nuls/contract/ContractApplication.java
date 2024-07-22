@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.nuls.contract.constant.ConfigurerConstant;
 import io.nuls.core.log.Log;
-import io.nuls.core.model.StringUtils;
 import io.nuls.core.parse.JSONUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,10 +12,13 @@ import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletCont
 import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
 
+import java.awt.*;
+
 @SpringBootApplication
 public class ContractApplication extends SpringBootServletInitializer implements EmbeddedServletContainerCustomizer {
 
     public static void main(String[] args) {
+        Toolkit.getDefaultToolkit();
         ObjectMapper objectMapper = JSONUtils.getInstance();
         objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
