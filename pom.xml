@@ -29,7 +29,7 @@
         </license>
     </licenses>
     <scm>
-        <tag>0.30</tag>
+        <tag>0.31</tag>
         <url>https://github.com/nuls-io/offline-smart-contract-platform</url>
         <connection>https://github.com/nuls-io/offline-smart-contract-platform.git</connection>
         <developerConnection>https://nuls.io</developerConnection>
